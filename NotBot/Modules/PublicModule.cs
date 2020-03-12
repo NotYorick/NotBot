@@ -101,5 +101,57 @@ namespace NotBot.Modules
                 }
             }
         }
+
+        [Command("poll")]
+        [Alias("createpoll")]
+        [Summary("E.g. n!poll <polltitle>, <option1>, <option2>, <option3>...")]
+        public async Task CreatePollAsync([Remainder]string message)
+        {
+            string[] reactions = { "0️⃣", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟" };
+
+            // Get an array of the different parameters, if there is only a title, only 1 option or more than 10 options => abort
+            var parameters = message.Split(",");
+            if (parameters.Length < 3 || parameters.Length > 10)
+            {
+                await Context.Channel.SendMessageAsync("To create a poll you need a title and 2-10 options");
+                return;
+            }
+
+            EmbedBuilder embedBuilder = new EmbedBuilder();
+            embedBuilder.WithTitle("Poll: " + parameters[0])
+                .WithAuthor(Context.User)
+                .WithCurrentTimestamp()
+                .WithColor(Color.Magenta);
+
+            IEmote[] emotes = new IEmote[parameters.Length - 1];
+            int i;
+            for (i = 1; i < parameters.Length; i++)
+            {
+                embedBuilder.Description += i + ".\t" + parameters[i] + "\n";
+                emotes[i - 1] = new Emoji(reactions[i]);
+            }
+
+            var pollMessage = await Context.Channel.SendMessageAsync("", false, embedBuilder.Build());
+            await pollMessage.AddReactionsAsync(emotes);
+        }
+
+        [Command("suggestion")]
+        [Alias("createsuggestion", "suggest")]
+        [Summary("E.g. n!suggestion <suggestion>")]
+        public async Task CreateSuggestionAsync([Remainder]string message)
+        {
+            //string[] updown = { "👍", "👎" };
+            IEmote[] emotes = { new Emoji("👍"), new Emoji("👎") };
+
+            EmbedBuilder embedBuilder = new EmbedBuilder();
+            embedBuilder.WithTitle("Suggestion: " + message)
+                .WithDescription("React with 👍 if you like it and 👎 if you don't")
+                .WithAuthor(Context.User)
+                .WithCurrentTimestamp()
+                .WithColor(Color.Teal);
+
+            var pollMessage = await Context.Channel.SendMessageAsync("", false, embedBuilder.Build());
+            await pollMessage.AddReactionsAsync(emotes);
+        }
     }
 }
