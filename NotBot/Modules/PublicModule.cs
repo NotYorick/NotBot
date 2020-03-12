@@ -14,6 +14,8 @@ namespace NotBot.Modules
     {
         public CommandService commandService { get; set; }
 
+        private static Random random = new Random();
+
         [Command("help")]
         public async Task HelpAsync()
         {
@@ -152,6 +154,43 @@ namespace NotBot.Modules
 
             var pollMessage = await Context.Channel.SendMessageAsync("", false, embedBuilder.Build());
             await pollMessage.AddReactionsAsync(emotes);
+        }
+        
+        [Command("rolldice")]
+        [Alias("roll", "dice")]
+        [Summary("E.g. n!rolldice <amount> <optional dicesides>")]
+        public async Task RollDiceAsync(int amount = 1, int sides = 6)
+        {
+            string message = Context.User.Mention + " rolled:";
+
+            if (amount < 1)
+            {
+                await Context.Channel.SendMessageAsync(message + " 0 because they forgot the dice");
+                return;
+            }
+
+            for (int i = 0; i < amount; i++)
+            {
+                message += " " + random.Next(1, sides+1) + "/" + sides;
+            }
+            await Context.Channel.SendMessageAsync(message);
+        }
+
+        [Command("battle")]
+        [Alias("fight", "raffel")]
+        [Summary("E.g. n!battle <name> vs <name>")]
+        public async Task BattleAsync([Remainder] string message)
+        {
+            string[] users = message.Split(" vs ");
+
+            if (users.Length < 2)
+            {
+                await Context.Channel.SendMessageAsync("There is no battle without 2 contestants");
+                return;
+            }
+
+            string winner = users[random.Next(0, users.Length)];
+            await Context.Channel.SendMessageAsync("The winner is: " + winner);
         }
     }
 }
