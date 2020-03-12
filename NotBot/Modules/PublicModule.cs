@@ -72,5 +72,34 @@ namespace NotBot.Modules
                 await Context.Channel.SendMessageAsync("Not doing shit");
             }
         }
+
+        // Reply with a meme
+        [Command("reddit")]
+        [Summary("E.g. n!reddit <subreddit>")]
+        public async Task MemeAsync(string subreddit = "memes")
+        {
+            XmlReaderSettings settings = new XmlReaderSettings();
+            settings.Async = true;
+
+            //TODO: Optimize the XML reading
+            using (XmlReader x = XmlReader.Create("https://www.reddit.com/r/" + subreddit + "/.rss", settings))
+            {
+                while (await x.ReadAsync())
+                {
+                    if (x.NodeType == XmlNodeType.Text)
+                    {
+                        string value = await x.GetValueAsync();
+
+                        Regex regex = new Regex("https://i.redd.it/([a-zA-Z0-9])*.(jpg|png)");
+                        Match match = regex.Match(value);
+                        if (match.Success)
+                        {
+                            await Context.Channel.SendMessageAsync(match.Value);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
     }
 }
