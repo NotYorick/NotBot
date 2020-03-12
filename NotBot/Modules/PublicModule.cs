@@ -14,9 +14,63 @@ namespace NotBot.Modules
     {
         public CommandService commandService { get; set; }
 
+        [Command("help")]
+        public async Task HelpAsync()
+        {
+            List<CommandInfo> commands = commandService.Commands.ToList();
+            EmbedBuilder embedBuilder = new EmbedBuilder();
+            var user = (IGuildUser)Context.User;
+
+            foreach (CommandInfo command in commands)
+            {
+                // Only give the commands from available modules
+                if ((command.Module.Name != "PublicModule" && !user.GuildPermissions.Administrator) || command.Name == "help") continue;
+
+                var summary = command.Summary ?? "No description found";
+                string aliasesString = string.Join(", ", command.Aliases);
+                embedBuilder.AddField(aliasesString, summary);
+            }
+            await Context.User.SendMessageAsync("Commandlist (prefix = n!): ", false, embedBuilder.Build()); // TODO: Prefix var in JSON or something
+        }
+
         [Command("ping")]
         [Alias("pong", "hello")]
         [Summary("E.g. n!ping")]
-        public Task PingAsync() => ReplyAsync("pong");        
+        public Task PingAsync() => ReplyAsync("pong");
+
+        // Reply with users activity
+        [Command("activity")]
+        [Alias("song", "game", "stream")]
+        [Summary("E.g. n!activity <optional targetuser>")]
+        public async Task ActivityAsync(SocketUser user = null)
+        {
+            if (user == null)
+                user = Context.User;
+
+            if (user.Activity != null)
+            {
+                if (user.Activity is SpotifyGame)
+                {
+                    var spotify = (SpotifyGame)user.Activity;
+                    await Context.Channel.SendMessageAsync("Listening to: " + spotify.TrackTitle + " By " + spotify.Artists.First());
+                }
+                else if (user.Activity is StreamingGame)
+                {
+                    var stream = (StreamingGame)user.Activity;
+                    await Context.Channel.SendMessageAsync("Live streaming: " + stream.Url);
+                }
+                else
+                {
+                    Game game = (Game)user.Activity;
+                    await Context.Channel.SendMessageAsync("Playing: " + game.Name);
+                }
+            }
+            else
+            {
+                var m = (IUserMessage)await Context.Channel.GetMessageAsync(Context.Message.Id);
+                await m.AddReactionAsync(new Emoji("🖕"));
+                await Context.Channel.SendMessageAsync("Not doing shit");
+            }
+        }
     }
 }
