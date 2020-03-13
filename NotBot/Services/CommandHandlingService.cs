@@ -42,7 +42,7 @@ namespace NotBot.Services
             // This value holds the offset where the prefix ends
             var argPos = 1;
             // Perform prefix check.
-            if (!message.HasStringPrefix("n!", ref argPos)) return;
+            if (!message.HasStringPrefix(Environment.GetEnvironmentVariable("NOTBOT_PREFIX"), ref argPos)) return;
 
             var context = new SocketCommandContext(_discord, message);
             // Perform the execution of the command. In this method,

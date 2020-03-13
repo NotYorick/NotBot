@@ -178,15 +178,31 @@ namespace NotBot.Modules
 
         [Command("battle")]
         [Alias("fight", "raffel")]
-        [Summary("E.g. n!battle <name> vs <name>")]
+        [Summary("E.g. n!battle <name>, <name2>, <name3>...")]
         public async Task BattleAsync([Remainder] string message)
         {
-            string[] users = message.Split(" vs ");
-
+            string[] users = message.Split(",", StringSplitOptions.RemoveEmptyEntries);
+            
             if (users.Length < 2)
             {
-                await Context.Channel.SendMessageAsync("There is no battle without 2 contestants");
-                return;
+                // Try and get 2 contestants with whitespaces
+                users = message.Split(" ", StringSplitOptions.RemoveEmptyEntries);
+                users = users.Where(x => x != ",").ToArray();
+                if (users.Length < 2)
+                {
+                    await Context.Channel.SendMessageAsync("There is no battle without 2 contestants");
+                    return;
+                }                
+            }
+            else
+            {
+                // Check if contestants are not whitespaces
+                users = users.Select(x => x.Trim()).Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
+                if (users.Length < 2)
+                {
+                    await Context.Channel.SendMessageAsync("There is no battle without 2 contestants");
+                    return;
+                }
             }
 
             string winner = users[random.Next(0, users.Length)];
